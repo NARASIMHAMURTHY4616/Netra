@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+{% block title %}Findings — {{ scan.filename }} — Netra Security{% endblock %}
+
+{% block content %}
+
+<!-- ═══════════════════════════════════════════════
+     PAGE HEADER
+═══════════════════════════════════════════════ -->
+<div class="page-header">
+  <div>
+    <a href="{{ url_for('dashboard') }}" class="back-link">
+      <svg viewBox="0 0 24 24" fill="none" width="14" height="14">
+        <path d="M19 12H5M5 12l7 7M5 12l7-7"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Back to Dashboard
+    </a>
+    <h1 class="page-title">
+      <svg class="file-icon" viewBox="0 0 24 24" fill="none" width="20" height="20">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"
+              stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+        <polyline points="14 2 14 8 20 8"
+                  stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+      </svg>
+      {{ scan.filename }}
+    </h1>
+    <p class="page-subtitle">
+      Scanned {{ scan.scanned_at.strftime('%Y-%m-%d at %H:%M:%S') }} UTC
+    </p>
+  </div>
+
+  <!-- Export Buttons -->
+  <div class="action-group">
+    <a href="{{ url_for('export_json', scan_id=scan.id) }}"
+       class="btn btn--ghost">
+      <svg viewBox="0 0 24 24" fill="none" width="14" height="14">
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <polyline points="7 10 12 15 17 10"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="12" y1="15" x2="12" y2="3"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Export JSON
+    </a>
+    <a href="{{ url_for('export_csv', scan_id=scan.id) }}"
+       class="btn btn--ghost">
+      <svg viewBox="0 0 24 24" fill="none" width="14" height="14">
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <polyline points="7 10 12 15 17 10"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="12" y1="15" x2="12" y2="3"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Export CSV
+    </a>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════
+     SCAN SUMMARY STRIP
+═══════════════════════════════════════════════ -->
+<div class="summary-strip">
+  <div class="summary-item">
+    <span class="summary-val">{{ scan.total }}</span>
+    <span class="summary-key">Total</span>
+  </div>
+  <div class="summary-divider"></div>
+  <div class="summary-item">
+    <span class="summary-val summary-val--critical">{{ scan.critical }}</span>
+    <span class="summary-key">Critical</span>
+  </div>
+  <div class="summary-divider"></div>
+  <div class="summary-item">
+    <span class="summary-val summary-val--high">{{ scan.high }}</span>
+    <span class="summary-key">High</span>
+  </div>
+  <div class="summary-divider"></div>
+  <div class="summary-item">
+    <span class="summary-val summary-val--medium">{{ scan.medium }}</span>
+    <span class="summary-key">Medium</span>
+  </div>
+  <div class="summary-divider"></div>
+  <div class="summary-item">
+    <span class="summary-val summary-val--low">{{ scan.low }}</span>
+    <span class="summary-key">Low</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════
+     SEVERITY FILTER BAR
+═══════════════════════════════════════════════ -->
+<div class="filter-bar">
+  <span class="filter-label">Filter by severity:</span>
+  <div class="filter-pills">
+
+    <a href="{{ url_for('findings', scan_id=scan.id) }}"
+       class="filter-pill {% if not filter_sev %}filter-pill--active{% endif %}">
+      All <span class="pill-count">{{ scan.total }}</span>
+    </a>
+
+    <a href="{{ url_for('findings', scan_id=scan.id, severity='CRITICAL') }}"
+       class="filter-pill filter-pill--critical {% if filter_sev == 'CRITICAL' %}filter-pill--active{% endif %}">
+      Critical <span class="pill-count">{{ scan.critical }}</span>
+    </a>
+
+    <a href="{{ url_for('findings', scan_id=scan.id, severity='HIGH') }}"
+       class="filter-pill filter-pill--high {% if filter_sev == 'HIGH' %}filter-pill--active{% endif %}">
+      High <span class="pill-count">{{ scan.high }}</span>
+    </a>
+
+    <a href="{{ url_for('findings', scan_id=scan.id, severity='MEDIUM') }}"
+       class="filter-pill filter-pill--medium {% if filter_sev == 'MEDIUM' %}filter-pill--active{% endif %}">
+      Medium <span class="pill-count">{{ scan.medium }}</span>
+    </a>
+
+    <a href="{{ url_for('findings', scan_id=scan.id, severity='LOW') }}"
+       class="filter-pill filter-pill--low {% if filter_sev == 'LOW' %}filter-pill--active{% endif %}">
+      Low <span class="pill-count">{{ scan.low }}</span>
+    </a>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════
+     FINDINGS TABLE
+═══════════════════════════════════════════════ -->
+{% if findings %}
+
+<div class="table-wrapper">
+  <table class="data-table findings-table" id="findingsTable">
+    <thead>
+      <tr>
+        <th style="width:90px">Rule ID</th>
+        <th style="width:100px" class="text-center">Severity</th>
+        <th>Issue</th>
+        <th style="width:80px" class="text-center">Line</th>
+        <th>Vulnerable Code</th>
+        <th style="width:260px">Recommendation</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for finding in findings %}
+      <tr class="table-row finding-row finding-row--{{ finding.severity | lower }}"
+          data-severity="{{ finding.severity }}">
+
+        <!-- Rule ID -->
+        <td>
+          <code class="rule-id">{{ finding.rule_id }}</code>
+        </td>
+
+        <!-- Severity Badge -->
+        <td class="text-center">
+          <span class="sev-badge sev-badge--{{ finding.severity | lower }}">
+            {{ finding.severity }}
+          </span>
+        </td>
+
+        <!-- Issue Title + Description -->
+        <td>
+          <div class="issue-title">{{ finding.title }}</div>
+          {% if finding.description %}
+          <div class="issue-desc">{{ finding.description }}</div>
+          {% endif %}
+        </td>
+
+        <!-- Line Number -->
+        <td class="text-center">
+          {% if finding.line_number %}
+            <span class="line-num">{{ finding.line_number }}</span>
+          {% else %}
+            <span class="count-zero">—</span>
+          {% endif %}
+        </td>
+
+        <!-- Vulnerable Code Snippet -->
+        <td>
+          {% if finding.vulnerable_code %}
+          <div class="code-block">
+            <pre class="code-snippet">{{ finding.vulnerable_code | e }}</pre>
+            <button class="copy-btn"
+                    onclick="copyCode(this)"
+                    title="Copy to clipboard">
+              <svg viewBox="0 0 24 24" fill="none" width="12" height="12">
+                <rect x="9" y="9" width="13" height="13" rx="2"
+                      stroke="currentColor" stroke-width="2"/>
+                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"
+                      stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </button>
+          </div>
+          {% else %}
+            <span class="count-zero">—</span>
+          {% endif %}
+        </td>
+
+        <!-- Recommendation -->
+        <td>
+          {% if finding.recommendation %}
+          <div class="recommendation-text">{{ finding.recommendation }}</div>
+          {% else %}
+            <span class="count-zero">—</span>
+          {% endif %}
+        </td>
+
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="findings-footer">
+  Showing <strong>{{ findings | length }}</strong>
+  finding{{ 's' if findings | length != 1 else '' }}
+  {% if filter_sev %} filtered to <span class="sev-badge sev-badge--{{ filter_sev | lower }}">{{ filter_sev }}</span>{% endif %}
+</div>
+
+{% else %}
+
+<!-- Empty state for active filter -->
+<div class="empty-state">
+  <div class="empty-icon">
+    <svg viewBox="0 0 24 24" fill="none" width="48" height="48">
+      <path d="M22 11.08V12a10 10 0 11-5.93-9.14"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <polyline points="22 4 12 14.01 9 11.01"
+                stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  {% if filter_sev %}
+    <h3 class="empty-title">No {{ filter_sev | lower }} findings</h3>
+    <p class="empty-desc">No vulnerabilities at this severity level were detected.</p>
+    <a href="{{ url_for('findings', scan_id=scan.id) }}" class="btn btn--ghost">
+      Clear Filter
+    </a>
+  {% else %}
+    <h3 class="empty-title">No findings detected</h3>
+    <p class="empty-desc">The scanner found no vulnerabilities in this file.</p>
+    <a href="{{ url_for('upload') }}" class="btn btn--primary">Scan Another File</a>
+  {% endif %}
+</div>
+
+{% endif %}
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+  // ── Copy code snippet to clipboard ──
+  function copyCode(btn) {
+    const pre  = btn.closest('.code-block').querySelector('.code-snippet');
+    const text = pre.textContent.trim();
+    navigator.clipboard.writeText(text).then(() => {
+      btn.classList.add('copy-btn--copied');
+      setTimeout(() => btn.classList.remove('copy-btn--copied'), 1500);
+    });
+  }
+</script>
+{% endblock %}

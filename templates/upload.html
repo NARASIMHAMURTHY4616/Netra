@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+{% block title %}New Scan — Netra Security{% endblock %}
+
+{% block content %}
+
+<!-- ═══════════════════════════════════════════════
+     PAGE HEADER
+═══════════════════════════════════════════════ -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">New Scan</h1>
+    <p class="page-subtitle">Upload a Python file to detect security vulnerabilities</p>
+  </div>
+</div>
+
+<div class="upload-layout">
+
+  <!-- ═══════════════════════════════════════════
+       UPLOAD CARD
+  ═══════════════════════════════════════════ -->
+  <div class="upload-card">
+
+    <form id="uploadForm"
+          action="{{ url_for('upload') }}"
+          method="POST"
+          enctype="multipart/form-data">
+
+      <!-- Drop Zone -->
+      <div class="drop-zone" id="dropZone">
+        <input type="file"
+               name="file"
+               id="fileInput"
+               accept=".py"
+               class="drop-input" />
+
+        <div class="drop-body" id="dropBody">
+          <!-- Upload icon -->
+          <svg class="drop-icon" viewBox="0 0 24 24" fill="none">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <polyline points="17 8 12 3 7 8"
+                      stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="12" y1="3" x2="12" y2="15"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+
+          <p class="drop-title">Drop your Python file here</p>
+          <p class="drop-sub">or <span class="drop-browse">click to browse</span></p>
+          <p class="drop-hint">Supports <code>.py</code> files up to 5 MB</p>
+        </div>
+
+        <!-- File selected state (hidden until file chosen) -->
+        <div class="drop-selected" id="dropSelected" style="display:none;">
+          <svg class="selected-icon" viewBox="0 0 24 24" fill="none">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"
+                  stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <polyline points="14 2 14 8 20 8"
+                      stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <line x1="16" y1="13" x2="8" y2="13"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="16" y1="17" x2="8" y2="17"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <div class="selected-info">
+            <span class="selected-name" id="selectedName">—</span>
+            <span class="selected-size" id="selectedSize">—</span>
+          </div>
+          <button type="button" class="selected-clear" id="clearFile" title="Remove file">✕</button>
+        </div>
+
+      </div><!-- /drop-zone -->
+
+      <!-- Submit -->
+      <button type="submit" class="btn btn--primary btn--full" id="submitBtn" disabled>
+        <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+          <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+          <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span id="submitLabel">Run Security Scan</span>
+      </button>
+
+    </form>
+
+    <!-- Scanning progress (hidden until submit) -->
+    <div class="scan-progress" id="scanProgress" style="display:none;">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <p class="progress-label" id="progressLabel">Initialising scanner…</p>
+    </div>
+
+  </div><!-- /upload-card -->
+
+
+  <!-- ═══════════════════════════════════════════
+       DETECTION CATEGORIES SIDEBAR
+  ═══════════════════════════════════════════ -->
+  <aside class="upload-sidebar">
+
+    <div class="sidebar-card">
+      <h3 class="sidebar-title">Detection Categories</h3>
+      <ul class="detection-list">
+        <li class="detection-item detection-item--critical">
+          <span class="detection-dot"></span>Command Injection
+        </li>
+        <li class="detection-item detection-item--critical">
+          <span class="detection-dot"></span>SQL Injection
+        </li>
+        <li class="detection-item detection-item--critical">
+          <span class="detection-dot"></span>Code Injection
+        </li>
+        <li class="detection-item detection-item--critical">
+          <span class="detection-dot"></span>Arbitrary Code Execution
+        </li>
+        <li class="detection-item detection-item--high">
+          <span class="detection-dot"></span>Path Traversal
+        </li>
+        <li class="detection-item detection-item--high">
+          <span class="detection-dot"></span>SSRF
+        </li>
+        <li class="detection-item detection-item--high">
+          <span class="detection-dot"></span>Insecure Deserialization
+        </li>
+        <li class="detection-item detection-item--high">
+          <span class="detection-dot"></span>Dangerous Subprocess Usage
+        </li>
+        <li class="detection-item detection-item--medium">
+          <span class="detection-dot"></span>Hardcoded Secrets &amp; Tokens
+        </li>
+        <li class="detection-item detection-item--medium">
+          <span class="detection-dot"></span>Hardcoded API Keys
+        </li>
+        <li class="detection-item detection-item--medium">
+          <span class="detection-dot"></span>Hardcoded Passwords
+        </li>
+        <li class="detection-item detection-item--medium">
+          <span class="detection-dot"></span>Weak Cryptography
+        </li>
+        <li class="detection-item detection-item--low">
+          <span class="detection-dot"></span>Dangerous Imports
+        </li>
+        <li class="detection-item detection-item--low">
+          <span class="detection-dot"></span>XSS
+        </li>
+      </ul>
+    </div>
+
+    <div class="sidebar-card sidebar-card--info">
+      <h3 class="sidebar-title">How it works</h3>
+      <ol class="how-list">
+        <li>Upload your <code>.py</code> file</li>
+        <li>AST + Regex engine analyses the code</li>
+        <li>Vulnerabilities are classified by severity</li>
+        <li>Findings are saved to scan history</li>
+        <li>Export results as JSON or CSV</li>
+      </ol>
+    </div>
+
+  </aside>
+
+</div><!-- /upload-layout -->
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+  const dropZone    = document.getElementById('dropZone');
+  const fileInput   = document.getElementById('fileInput');
+  const dropBody    = document.getElementById('dropBody');
+  const dropSelected= document.getElementById('dropSelected');
+  const selectedName= document.getElementById('selectedName');
+  const selectedSize= document.getElementById('selectedSize');
+  const clearFile   = document.getElementById('clearFile');
+  const submitBtn   = document.getElementById('submitBtn');
+  const submitLabel = document.getElementById('submitLabel');
+  const uploadForm  = document.getElementById('uploadForm');
+  const scanProgress= document.getElementById('scanProgress');
+  const progressFill= document.getElementById('progressFill');
+  const progressLabel=document.getElementById('progressLabel');
+
+  // ── Click anywhere on zone → open file picker ──
+  dropZone.addEventListener('click', (e) => {
+    if (e.target !== clearFile) fileInput.click();
+  });
+
+  // ── Drag over styling ──
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('drop-zone--over');
+  });
+
+  ['dragleave', 'dragend'].forEach(evt =>
+    dropZone.addEventListener(evt, () => dropZone.classList.remove('drop-zone--over'))
+  );
+
+  // ── Drop ──
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('drop-zone--over');
+    const file = e.dataTransfer.files[0];
+    if (file) applyFile(file);
+  });
+
+  // ── File input change ──
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) applyFile(fileInput.files[0]);
+  });
+
+  // ── Apply chosen file ──
+  function applyFile(file) {
+    if (!file.name.endsWith('.py')) {
+      alert('Only .py files are supported.');
+      return;
+    }
+    selectedName.textContent = file.name;
+    selectedSize.textContent = formatBytes(file.size);
+    dropBody.style.display    = 'none';
+    dropSelected.style.display= 'flex';
+    submitBtn.disabled        = false;
+  }
+
+  // ── Clear selection ──
+  clearFile.addEventListener('click', (e) => {
+    e.stopPropagation();
+    fileInput.value           = '';
+    dropBody.style.display    = 'flex';
+    dropSelected.style.display= 'none';
+    submitBtn.disabled        = true;
+  });
+
+  // ── Submit → show progress animation ──
+  uploadForm.addEventListener('submit', () => {
+    submitBtn.disabled  = true;
+    submitLabel.textContent = 'Scanning…';
+    scanProgress.style.display = 'block';
+    animateProgress();
+  });
+
+  function animateProgress() {
+    const steps = [
+      [15,  'Loading file…'],
+      [35,  'Building AST…'],
+      [55,  'Running regex rules…'],
+      [75,  'Classifying findings…'],
+      [90,  'Saving results…'],
+      [98,  'Finalising…'],
+    ];
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i >= steps.length) { clearInterval(interval); return; }
+      progressFill.style.width   = steps[i][0] + '%';
+      progressLabel.textContent  = steps[i][1];
+      i++;
+    }, 600);
+  }
+
+  // ── Byte formatter ──
+  function formatBytes(bytes) {
+    if (bytes < 1024)       return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+</script>
+{% endblock %}

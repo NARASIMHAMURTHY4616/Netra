@@ -1,1 +1,228 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Netra Security{% endblock %}
 
+{% block content %}
+
+<!-- ═══════════════════════════════════════════════
+     PAGE HEADER
+═══════════════════════════════════════════════ -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Security Dashboard</h1>
+    <p class="page-subtitle">Aggregated findings across all scans</p>
+  </div>
+  <a href="{{ url_for('upload') }}" class="btn btn--primary">
+    <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+      <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    New Scan
+  </a>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     STATS CARDS
+═══════════════════════════════════════════════ -->
+<div class="stats-grid">
+
+  <div class="stat-card stat-card--total">
+    <div class="stat-header">
+      <span class="stat-label">Total Findings</span>
+      <svg class="stat-icon" viewBox="0 0 24 24" fill="none">
+        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <rect x="9" y="3" width="6" height="4" rx="1" stroke="currentColor" stroke-width="2"/>
+        <path d="M9 12h6M9 16h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="stat-value">{{ totals.total }}</div>
+    <div class="stat-meta">across {{ scans|length }} scan{{ 's' if scans|length != 1 else '' }}</div>
+  </div>
+
+  <div class="stat-card stat-card--critical">
+    <div class="stat-header">
+      <span class="stat-label">Critical</span>
+      <svg class="stat-icon" viewBox="0 0 24 24" fill="none">
+        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+              stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+        <line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="stat-value">{{ totals.critical }}</div>
+    <div class="stat-meta">immediate action required</div>
+  </div>
+
+  <div class="stat-card stat-card--high">
+    <div class="stat-header">
+      <span class="stat-label">High</span>
+      <svg class="stat-icon" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+        <line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <line x1="12" y1="16" x2="12.01" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="stat-value">{{ totals.high }}</div>
+    <div class="stat-meta">high severity issues</div>
+  </div>
+
+  <div class="stat-card stat-card--medium">
+    <div class="stat-header">
+      <span class="stat-label">Medium</span>
+      <svg class="stat-icon" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="stat-value">{{ totals.medium }}</div>
+    <div class="stat-meta">medium severity issues</div>
+  </div>
+
+  <div class="stat-card stat-card--low">
+    <div class="stat-header">
+      <span class="stat-label">Low</span>
+      <svg class="stat-icon" viewBox="0 0 24 24" fill="none">
+        <path d="M22 11.08V12a10 10 0 11-5.93-9.14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <polyline points="22 4 12 14.01 9 11.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="stat-value">{{ totals.low }}</div>
+    <div class="stat-meta">low severity issues</div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SCAN HISTORY TABLE
+═══════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <h2 class="section-title">Scan History</h2>
+    <span class="section-badge">{{ scans|length }} scan{{ 's' if scans|length != 1 else '' }}</span>
+  </div>
+
+  {% if scans %}
+  <div class="table-wrapper">
+    <table class="data-table" id="scanTable">
+      <thead>
+        <tr>
+          <th>File</th>
+          <th>Scanned</th>
+          <th class="text-center">Total</th>
+          <th class="text-center">Critical</th>
+          <th class="text-center">High</th>
+          <th class="text-center">Medium</th>
+          <th class="text-center">Low</th>
+          <th class="text-center">Status</th>
+          <th class="text-center">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for scan in scans %}
+        <tr class="table-row">
+
+          <!-- Filename -->
+          <td class="td-file">
+            <svg class="file-icon" viewBox="0 0 24 24" fill="none">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"
+                    stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+            <a href="{{ url_for('findings', scan_id=scan.id) }}" class="file-link">
+              {{ scan.filename }}
+            </a>
+          </td>
+
+          <!-- Timestamp -->
+          <td class="td-time">
+            <span class="time-text">{{ scan.scanned_at.strftime('%Y-%m-%d') }}</span>
+            <span class="time-sub">{{ scan.scanned_at.strftime('%H:%M:%S') }}</span>
+          </td>
+
+          <!-- Counts -->
+          <td class="text-center"><span class="count-badge count-badge--total">{{ scan.total }}</span></td>
+          <td class="text-center">
+            {% if scan.critical > 0 %}
+              <span class="count-badge count-badge--critical">{{ scan.critical }}</span>
+            {% else %}
+              <span class="count-zero">—</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            {% if scan.high > 0 %}
+              <span class="count-badge count-badge--high">{{ scan.high }}</span>
+            {% else %}
+              <span class="count-zero">—</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            {% if scan.medium > 0 %}
+              <span class="count-badge count-badge--medium">{{ scan.medium }}</span>
+            {% else %}
+              <span class="count-zero">—</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            {% if scan.low > 0 %}
+              <span class="count-badge count-badge--low">{{ scan.low }}</span>
+            {% else %}
+              <span class="count-zero">—</span>
+            {% endif %}
+          </td>
+
+          <!-- Status -->
+          <td class="text-center">
+            <span class="status-badge status-badge--{{ scan.status }}">
+              {{ scan.status | capitalize }}
+            </span>
+          </td>
+
+          <!-- Actions -->
+          <td class="text-center">
+            <div class="action-group">
+              <a href="{{ url_for('findings', scan_id=scan.id) }}"
+                 class="btn btn--sm btn--ghost" title="View Findings">
+                View
+              </a>
+              <form action="{{ url_for('delete_scan', scan_id=scan.id) }}"
+                    method="POST"
+                    onsubmit="return confirmDelete('{{ scan.filename }}')">
+                <button type="submit" class="btn btn--sm btn--danger" title="Delete Scan">
+                  Delete
+                </button>
+              </form>
+            </div>
+          </td>
+
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% else %}
+  <!-- Empty state -->
+  <div class="empty-state">
+    <div class="empty-icon">
+      <svg viewBox="0 0 24 24" fill="none" width="48" height="48">
+        <path d="M12 2L3 7V12C3 16.55 6.84 20.74 12 22C17.16 20.74 21 16.55 21 12V7L12 2Z"
+              stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h3 class="empty-title">No scans yet</h3>
+    <p class="empty-desc">Upload a Python file to run your first security scan.</p>
+    <a href="{{ url_for('upload') }}" class="btn btn--primary">Start Scanning</a>
+  </div>
+  {% endif %}
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function confirmDelete(filename) {
+    return confirm(`Delete scan for "${filename}"?\nThis action cannot be undone.`);
+  }
+</script>
+{% endblock %}
