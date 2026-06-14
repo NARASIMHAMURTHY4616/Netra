@@ -1,5 +1,8 @@
 # 🔱 Netra Security
 
+
+<img src="https://raw.githubusercontent.com/NARASIMHAMURTHY4616/Netra-security/main/Gemini_Generated_Image_6gr6k6gr6k6gr6k6.png" alt="Netra Security">
+
 **Netra Security** is a lightweight Static Application Security Testing (SAST) platform built with Python and Flask. Inspired by the concept of the "third eye" (Netra), the project helps developers identify common security vulnerabilities in Python source code through rule-based and AST-based analysis.
 
 ---
