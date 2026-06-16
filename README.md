@@ -19,6 +19,7 @@
 
 Currently detects:
 
+
 | ID | Vulnerability | Severity |
 |----|--------------|-----------|
 | NETRA-001 | Command Injection (`os.system`) | CRITICAL |
@@ -31,7 +32,9 @@ Currently detects:
 
 ---
 
+
 ## 🧠 Detection Techniques
+
 
 ### Rule-Based Analysis
 Detects insecure patterns using:
