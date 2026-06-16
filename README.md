@@ -54,7 +54,7 @@ Parses Python source code into an Abstract Syntax Tree and identifies:
 ## 📂 Project Structure
 
 ```text
-netra-security/
+Netra-security/
 
 ├── app.py
 ├── scan_engine.py
